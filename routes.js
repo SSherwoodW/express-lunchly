@@ -1,6 +1,7 @@
 /** Routes for Lunchly */
 
 const express = require("express");
+const { workerData } = require("worker_threads");
 const db = require("./db");
 
 const Customer = require("./models/customer");
@@ -54,9 +55,16 @@ router.post("/add/", async function (req, res, next) {
 
 router.post("/customers", async function (req, res, next) {
     try {
-        const customer = req.body.customer;
-        console.log(customer);
-        return res.redirect("/");
+        const name = req.body.customer;
+        const customerName = name
+            .split(" ")
+            .map((part) => {
+                return part[0].toUpperCase() + part.substring(1);
+            })
+            .join(" ");
+        const customer = await Customer.getByName(customerName);
+        customer.name = customer.fullNameCreator();
+        res.render("customer_list.html", { customer });
     } catch (err) {
         return next(err);
     }
